@@ -305,16 +305,10 @@ folder for those file types as defined on the target instance.
 				}
 				if ("Type" -notin $f.PSobject.Properties.name)
 				{
-					#$f = $f | Select-Object *,  @{Name="Type";Expression={"Full"}}
+					$f = $f | Select-Object *,  @{Name="Type";Expression={"Full"}}
 				}
-				if ("BackupSetGUID" -notin $f.PSobject.Properties.name)
-				{
-					#This line until Get-DbaBackupHistory gets fixed
-					$f = $f | Select-Object *, @{Name="BackupSetGUID";Expression={$_.BackupSetupID}}
-					#This one once it's sorted:
-					#$f = $f | Select-Object *, @{Name="BackupSetGUID";Expression={$_.BackupSetID}}
-				}	
-				$BackupFiles += $F | Select-Object *, @{Name="ServerName";Expression={$_.SqlInstance}}, @{Name="BackupStartDate";Expression={$_.Start -as [DateTime]}}
+
+				$BackupFiles += $F | Select-Object *, @{Name="ServerName";Expression={$_.SqlInstance}}, @{Name="BackupStartDate";Expression={$_.Start}}
 				$str = ($BackUpFiles | select Fullname) -join ',' 
 			}
 			else
@@ -331,7 +325,7 @@ folder for those file types as defined on the target instance.
 					{
 						Write-Verbose "$FunctionName - Working remotely, and non UNC path used. Dropping to XpDirTree, all paths evaluated at $SqlServer"
 						# Many internal functions parse using Get-ChildItem. 
-						# We need to use Test-DbaSqlPath and other commands instead
+						# We need to use Test-SqlPath and other commands instead
 						# Prevent people from trying 
 						
 						#Write-Warning "Currently, you can only use UNC paths when running this command remotely. We expect to support non-UNC paths for remote servers shortly."
@@ -358,7 +352,7 @@ folder for those file types as defined on the target instance.
 						{
 							if ($p -match '\.\w{3}\Z' )
 							{
-								if (Test-DbaSqlPath -Path $p -SqlServer $SqlServer -SqlCredential $SqlCredential)
+								if (Test-SqlPath -Path $p -SqlServer $SqlServer -SqlCredential $SqlCredential)
 								{
 									$p = $p | Select-Object *, @{Name="FullName";Expression={$p}}
 									$BackupFiles += $p
@@ -381,7 +375,7 @@ folder for those file types as defined on the target instance.
 							}
 							catch
 							{
-								if (Test-DbaSqlPath -Path $p -SqlServer $SqlServer -SqlCredential $SqlCredential)
+								if (Test-SqlPath -Path $p -SqlServer $SqlServer -SqlCredential $SqlCredential)
 								{
 									$p = $p | Select-Object *, @{Name="FullName";Expression={$p}}
 									$BackupFiles += $p
@@ -425,7 +419,7 @@ folder for those file types as defined on the target instance.
 							}
 							else
 							{
-								if (Test-DbaSqlPath -Path $FileTmp.FullName -SqlServer $SqlServer -SqlCredential $SqlCredential)
+								if (Test-SqlPath -Path $FileTmp.FullName -SqlServer $SqlServer -SqlCredential $SqlCredential)
 								{
 									$BackupFiles += $FileTmp
 								}
@@ -462,8 +456,8 @@ folder for those file types as defined on the target instance.
 								Write-Verbose "$FunctionName - it's folder"
 								ForEach ($ft in $Filetmp.FullName)
 								{			
-									Write-Verbose "$FunctionName - Piped files Test-DbaSqlPath $($ft)"					
-									if (Test-DbaSqlPath -Path $ft -SqlServer $SqlServer -SqlCredential $SqlCredential)
+									Write-Verbose "$FunctionName - Piped files Test-SqlPath $($ft)"					
+									if (Test-SqlPath -Path $ft -SqlServer $SqlServer -SqlCredential $SqlCredential)
 									{
 										$BackupFiles += $ft
 									}
@@ -511,7 +505,7 @@ folder for those file types as defined on the target instance.
 			Write-Verbose "$FunctionName - Remote server, checking folders"
 			if ($DestinationDataDirectory -ne '')
 			{
-				if ((Test-DbaSqlPath -Path $DestinationDataDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential) -ne $true)
+				if ((Test-SqlPath -Path $DestinationDataDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential) -ne $true)
 				{
 					if ((New-DbaSqlDirectory -Path $DestinationDataDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential).Created -ne $true)
 					{
@@ -530,7 +524,7 @@ folder for those file types as defined on the target instance.
 			}
 			if ($DestinationLogDirectory -ne '')
 			{
-				if ((Test-DbaSqlPath -Path $DestinationLogDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential) -ne $true)
+				if ((Test-SqlPath -Path $DestinationLogDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential) -ne $true)
 				{
 					if((New-DbaSqlDirectory -Path $DestinationLogDirectory -SqlServer $SqlServer -SqlCredential $SqlCredential).Created -ne $true)
 					{
